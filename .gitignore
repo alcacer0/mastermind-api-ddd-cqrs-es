@@ -1,0 +1,4 @@
+venv/
+db/data
+.vscode/
+.idea

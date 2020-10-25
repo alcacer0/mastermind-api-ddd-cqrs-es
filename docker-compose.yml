@@ -1,0 +1,26 @@
+version: "3.7"
+services:
+  mastermind-api:
+    restart: always
+    build:
+      context: ./mastermind_app
+    command: gunicorn -w 1 -b 0.0.0.0:5000 mastermind.app:app --reload
+    volumes:
+      - ./mastermind_app/mastermind:/mastermind-api/mastermind
+    env_file:
+      - ./mastermind_app/env/.env.local
+    depends_on:
+      - mastermind-db
+    ports:
+      - 5000:5000
+    container_name: mastermind-flask-api
+  mastermind-db:
+    restart: always
+    image: postgres:12-alpine
+    volumes:
+      - ./db/data/:/var/lib/postgresql/data/
+    env_file:
+      - ./db/env/.env.local
+    ports:
+      - 54321:5432
+    container_name: mastermind-postgres-db
