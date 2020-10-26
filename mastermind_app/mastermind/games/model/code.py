@@ -4,15 +4,13 @@ from dataclasses import dataclass, field
 from typing import List
 
 
-COLORS = ['Red', 'Blue', 'Green', 'Yellow']
-
-
 def random_code() -> List[str]:
-    return [random.choice(COLORS) for _ in range(4)]
+    return [random.choice(Code.COLORS) for _ in range(4)]
 
 
 @dataclass(frozen=True)
 class Code:
+    COLORS = ['Red', 'Blue', 'Green', 'Yellow', 'Brown', 'Orange']
     value: List[str] = field(default_factory=random_code)
 
     def __post_init__(self):
@@ -20,5 +18,5 @@ class Code:
             raise ValueError('A code has 4 pegs')
 
         for color in self.value:
-            if color not in COLORS:
-                raise ValueError(f'Color {color} is not supported ({COLORS})')
+            if color not in Code.COLORS:
+                raise ValueError(f'Color {color} is not supported ({Code.COLORS})')

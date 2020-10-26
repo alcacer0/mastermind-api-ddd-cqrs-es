@@ -14,3 +14,9 @@ class GameCreated(BaseEvent):
 class GameCodeToBreakDefined(BaseEvent):
     game_id: str = attr.ib(kw_only=True)
     code: List[str] = attr.ib(kw_only=True)
+
+
+@attr.s(frozen=True)
+class CodeGuessMade(BaseEvent):
+    game_id: str = attr.ib(kw_only=True)
+    code: List[str] = attr.ib(kw_only=True)
