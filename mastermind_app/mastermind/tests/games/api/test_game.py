@@ -4,7 +4,8 @@ from flask import url_for
 
 from mastermind.shared.model import UniqueID
 from mastermind.games.composition_root import get_game_write_repo
-from mastermind.games.use_cases import create_new_game_with_code_to_break, GameConfigDTO
+from mastermind.games.use_cases import create_new_game_with_code_to_break,\
+    GameConfigDTO, make_a_code_guess, CodeGuessDTO
 
 
 @pytest.fixture
@@ -19,7 +20,7 @@ def test_game(test_db):
 
 def test_post_new_game(client, test_db):
     # Test max guesses is validated
-    url = url_for('gameresource')
+    url = url_for('gamelistresource')
     response = client.post(url, json={})
     assert response.status_code == 422
     response = client.post(url, json={'max_guesses': 99})
@@ -29,6 +30,7 @@ def test_post_new_game(client, test_db):
     response = client.post(url, json={'max_guesses': 6})
     assert 'max_guesses' in response.get_json()
     assert 'game_id' in response.get_json()
+    assert response.get_json()['code_to_break'] is None
 
     # Test events are created and we can source a game aggregate/entity with
     # the given config, a game id and a code to break.
@@ -97,3 +99,31 @@ def test_game_is_finished_but_not_decoded_when_reaching_max_attempts(client, tes
 
         # Test one extra point is given if the game finishes without being decoded
         assert game.points == game.max_guesses + 1
+
+
+def test_game_historic_is_returned(client, test_db, test_game):
+    url = url_for('gameresource', game_id=test_game.game_id.value)
+
+    # Test can get game with a given game_id
+    response = client.get(url)
+    assert response.status_code == 200
+
+    # Test response body contains status information
+    body = response.get_json()
+    assert 'points' in body
+    assert 'finished' in body
+    assert 'decoded' in body
+    assert 'guesses' in body and type(body['guesses']) == list
+
+    with get_game_write_repo() as game_repo:
+        guess = CodeGuessDTO(
+            game_id=test_game.game_id.value, code=test_game.code_to_break.value)
+        make_a_code_guess(operation_id=UniqueID(), code_guess=guess, repo=game_repo)
+
+    # Test each guess in the historic contains the corresponding feedback
+    response = client.get(url)
+    body = response.get_json()
+    assert 'feedback' in body['guesses'][0]
+
+    # Test code to break is returned if the game has finished
+    assert body['code_to_break'] is not None

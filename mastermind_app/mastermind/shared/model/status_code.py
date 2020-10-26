@@ -2,6 +2,7 @@ from enum import Enum
 
 
 class StatusCodes(Enum):
+    OK = 200
     CREATED = 201
     NOT_FOUND = 404
     INVALID_USER_DATA = 422
